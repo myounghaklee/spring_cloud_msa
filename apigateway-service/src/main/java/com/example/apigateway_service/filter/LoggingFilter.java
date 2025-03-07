@@ -9,31 +9,30 @@ import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-import java.io.ObjectInputFilter;
-
 @Component
 @Slf4j
-public class CustomFilter extends AbstractGatewayFilterFactory<CustomFilter.Config> {
-    public CustomFilter(){
-        super(Config.class);
-    }
-
+public class LoggingFilter extends AbstractGatewayFilterFactory<LoggingFilter.Config> {
+    public LoggingFilter(){super(Config.class);}
 
     @Override
-    public GatewayFilter apply(CustomFilter.Config config) {
+    public GatewayFilter apply(Config config) {
         return ((exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
             ServerHttpResponse response = exchange.getResponse();
 
-            log.info("Custom PRE filter: request id => {}" , request.getId());
+            log.info("Loggin filter baseMessage: " + config.getBaseMessage());
 
-            //Custom Post Filter
+            if(config.isPreLogger()){
+                log.info("Logging Pre Filter : request uri -> {} ", request.getId());
+            }
             return chain.filter(exchange).then(Mono.fromRunnable(()->{
-                log.info("Coustom PoST filter: response code -> {}" , response.getStatusCode());
+                if(config.isPostLogger()){
+                    log.info("Loggin Post filter : response code -> {}", response.getStatusCode());
+                }
             }));
         });
-
     }
+
     @Data
     public static class Config{
         private String baseMessage;
